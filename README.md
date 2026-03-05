@@ -56,6 +56,12 @@ Review the generated pseudo_paper.md for AI-assisted insights.
 📊 Statistical Methodology
 For inter-system comparisons, this pipeline employs the Kruskal-Wallis H-test. This non-parametric approach is used to assess if the distribution of properties (like SASA or RMSD) differs significantly across the simulated ensembles without assuming a normal distribution.
 
+## 🚀 Quick Start
+1. Place your trajectories in `input/`.
+2. Update `config/pipeline_config.sh`.
+3. Run `./run_pipeline.sh`.
+4. Run `python scripts/06_llm_interpretation.py` for AI analysis.
+5. Run `python scripts/07_paper_builder.py` to draft your manuscript.
 
 ✍️ Credits & Citations
 If you use this pipeline in your research, please cite the original author and the underlying tools:
