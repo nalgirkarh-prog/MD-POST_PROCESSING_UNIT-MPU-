@@ -76,7 +76,7 @@ MD-Post Pipeline: [Your Name/Handle], (2026). MD-Post: Automated MD Analysis & I
 BibTeX
 Code snippet
 @software{harsh_md_post_2026,
-  author = {Harsh [Your Last Name]},
+  author = {Harsh Nalgirkar},
   title = {MD-Post: Automated MD Analysis and LLM-Assisted Interpretation Pipeline},
   url = {https://github.com/YOUR_USERNAME/md_post},
   version = {1.0.0},
