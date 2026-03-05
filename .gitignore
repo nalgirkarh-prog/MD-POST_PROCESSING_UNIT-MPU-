@@ -1,0 +1,12 @@
+*.xtc
+*.trr
+*.tpr
+*.gro
+*.pdb
+*.edr
+*.cpt
+outputs/
+figures/
+ollama/
+scripts/outputs/
+#*#

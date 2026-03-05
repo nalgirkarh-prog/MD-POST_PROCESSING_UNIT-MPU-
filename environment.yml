@@ -1,0 +1,35 @@
+name: md_pipeline
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  # Core MD & Visualization
+  - gromacs=2026        # Latest GROMACS version
+  - pymol-open-source   # For 05_plots.py or manual checks
+  
+  # Python Stack (for plotting & LLM integration)
+  - python=3.11
+  - numpy
+  - pandas
+  - matplotlib
+  - seaborn
+  - scipy
+  - MDAnalysis          # Essential for 03_advanced_analysis.sh/py
+  - MDTraj
+  - requests            # To communicate with local Ollama API
+  
+  # Statistics & R Stack (for 04_statistics.R)
+  - r-base
+  - r-ggplot2
+  - r-tidyverse
+  - r-corrplot          # Great for DCCM visualization
+  
+  # System Utilities
+  - bash
+  - tree
+  - pip
+
+  # Pip-specific installs (if not in conda)
+  - pip:
+      - ollama          # Official Python library for Ollama
