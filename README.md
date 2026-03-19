@@ -35,7 +35,7 @@ ollama pull llama3
 Clone the repository and build the md_pipeline environment:
 
 Bash
-git clone https://github.com/YOUR_USERNAME/md_post.git
+git clone https://github.com/nalgirkarh-prog/md_post.git
 cd md_post
 conda env create -f environment.yml
 conda activate md_pipeline
