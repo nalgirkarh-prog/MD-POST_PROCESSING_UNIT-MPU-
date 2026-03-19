@@ -71,14 +71,14 @@ GROMACS: Abraham, M. J., et al. (2015). GROMACS: High performance molecular simu
 
 Ollama: Ollama Team. (2024). Local Large Language Model Runner.
 
-MD-Post Pipeline: [Your Name/Handle], (2026). MD-Post: Automated MD Analysis & Interpretation. GitHub Repository.
+MD-Post Pipeline: [Harsh Nalgirkar/nalgirkarh-prog], (2026). MD-Post: Automated MD Analysis & Interpretation. GitHub Repository.
 
 BibTeX
 Code snippet
 @software{harsh_md_post_2026,
   author = {Harsh Nalgirkar},
   title = {MD-Post: Automated MD Analysis and LLM-Assisted Interpretation Pipeline},
-  url = {https://github.com/YOUR_USERNAME/md_post},
+  url = {https://github.com/nalgirkarh-prog/md_post},
   version = {1.0.0},
   year = {2026}
 }
