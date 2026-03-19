@@ -78,7 +78,7 @@ Code snippet
 @software{harsh_md_post_2026,
   author = {Harsh Nalgirkar},
   title = {MD-Post: Automated MD Analysis and LLM-Assisted Interpretation Pipeline},
-  url = {https://github.com/nalgirkarh-prog/md_post},
+  url = (https://github.com/nalgirkarh-prog/MD-POST_PROCESSING_UNIT-MPU-),
   version = {1.0.0},
   year = {2026}
 }
