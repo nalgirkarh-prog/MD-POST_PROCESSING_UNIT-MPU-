@@ -21,6 +21,7 @@ mkdir -p "$SYS_OUT/dccm"
 
 # Automatically detect files
 TPR=$(find "$SYSTEM_DIR" -maxdepth 1 -name "*.tpr" | head -n 1)
+NDX=$(find "$SYSTEM_DIR" -maxdepth 1 -name "*.ndx" | head -n 1)
 TRAJ="$SYS_OUT/processed/processed.xtc"
 
 # Safety checks
@@ -35,6 +36,13 @@ if [[ ! -f "$TRAJ" ]]; then
     exit 1
 fi
 
+if [[ -n "$NDX" ]]; then
+    NDX_ARG="-n $NDX"
+    echo "Using custom index file: $NDX"
+else
+    NDX_ARG=""
+fi
+
 ################################
 # PCA
 ################################
@@ -46,6 +54,7 @@ cd "$SYS_OUT/pca"
 printf "3\n3\n" | gmx covar \
 -s "$TPR" \
 -f "$TRAJ" \
+$NDX_ARG \
 -o eigenvalues.xvg \
 -v eigenvectors.trr
 
@@ -53,6 +62,7 @@ printf "3\n3\n" | gmx anaeig \
 -v eigenvectors.trr \
 -s "$TPR" \
 -f "$TRAJ" \
+$NDX_ARG \
 -first 1 -last 2 \
 -proj projection.xvg
 
@@ -62,16 +72,7 @@ cd "$PROJECT_ROOT"
 # FEL
 ################################
 
-echo "Generating FEL..."
-
-cd "$SYS_OUT/fel"
-
-gmx sham \
--f "$SYS_OUT/pca/projection.xvg" \
--ls fel.xpm \
--notime
-
-cd "$PROJECT_ROOT"
+echo "FEL generation scheduled for Python plotting stage (direct Boltzmann inversion)..."
 
 ################################
 # DSSP
@@ -81,10 +82,14 @@ echo "Running DSSP..."
 
 cd "$SYS_OUT/dssa"
 
+# Using -hmode dssp for robust hydrogen-handling and outputting both .dat and stats .xvg
 printf "1\n" | gmx dssp \
 -s "$TPR" \
 -f "$TRAJ" \
--o dssp.dat
+$NDX_ARG \
+-hmode dssp \
+-o dssp.dat \
+-num dssp.xvg
 
 cd "$PROJECT_ROOT"
 
@@ -92,16 +97,11 @@ cd "$PROJECT_ROOT"
 # DCCM
 ################################
 
-echo "Generating DCCM..."
+echo "Generating DCCM via Python MDAnalysis..."
 
-cd "$SYS_OUT/dccm"
-
-printf "4\n4\n" | gmx covar \
+python "$PROJECT_ROOT/scripts/calculate_dccm.py" \
 -s "$TPR" \
 -f "$TRAJ" \
--o covar_matrix.xvg \
--v eigenvectors_dccm.trr
-
-cd "$PROJECT_ROOT"
+-o "$SYS_OUT/dccm/dccm.csv"
 
 echo "Advanced analysis complete for $SYS"

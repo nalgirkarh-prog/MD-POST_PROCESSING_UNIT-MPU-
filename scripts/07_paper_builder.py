@@ -5,12 +5,18 @@ BASE_DIR = "outputs"
 PAPER_DIR = os.path.join(BASE_DIR, "paper")
 LLM_DIR = os.path.join(BASE_DIR, "llm")
 
+# Configure the LLM model — set via env var for flexibility
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2")
+
 os.makedirs(PAPER_DIR, exist_ok=True)
 
 interpretation_file = os.path.join(LLM_DIR, "interpretation.txt")
 
 if not os.path.exists(interpretation_file):
-    raise FileNotFoundError("interpretation.txt not found. Run 06_llm_interpretation.py first.")
+    raise FileNotFoundError(
+        "interpretation.txt not found. "
+        "Run python scripts/06_llm_interpretation.py first."
+    )
 
 with open(interpretation_file) as f:
     interpretation = f.read()
@@ -28,16 +34,16 @@ Expand the following MD interpretation into a **detailed journal-style
 Results and Discussion section**.
 
 Requirements:
-
 • Write in clear scientific narrative form
 • Avoid bullet points
 • Explain each concept clearly so that even a non-science reader
   can understand the meaning
 • Interpret the results biologically
 • Compare the different systems where possible
-• Discuss implications of RMSD, RMSF, Rg, SASA, PCA, FEL and DSSP
+• Discuss implications of RMSD, RMSF, Rg, SASA, H-Bonds, PCA, FEL, DSSP, and DCCM
 • Explain what the results suggest about structural stability
 • Explain conformational dynamics
+• Discuss correlated and anti-correlated motions from DCCM
 • Explain possible biological implications of the observed dynamics
 
 Target length: **1500–2500 words**
@@ -47,27 +53,31 @@ Interpretation to expand:
 {interpretation}
 """
 
-print("Generating expanded Results and Discussion using LLM...")
+print(f"Generating expanded Results and Discussion using LLM ({OLLAMA_MODEL})...")
 
-response = ollama.chat(
-    model="llama3",
-    options={
-        "temperature":0.3,
-        "num_predict":3000
-    },
-    messages=[
-        {
-            "role":"system",
-            "content":"You are an expert structural biologist and scientific writer."
+try:
+    response = ollama.chat(
+        model=OLLAMA_MODEL,
+        options={
+            "temperature": 0.3,
+            "num_predict": 3000
         },
-        {
-            "role":"user",
-            "content":paper_prompt
-        }
-    ]
-)
+        messages=[
+            {
+                "role": "system",
+                "content": "You are an expert structural biologist and scientific writer."
+            },
+            {
+                "role": "user",
+                "content": paper_prompt
+            }
+        ]
+    )
+    results_section = response["message"]["content"]
 
-results_section = response["message"]["content"]
+except Exception as e:
+    print(f"❌ Ollama paper generation failed: {e}")
+    results_section = "[LLM generation failed — please run ollama serve and retry.]"
 
 
 ###############################################
@@ -80,6 +90,11 @@ Molecular Dynamics Simulation Analysis
 All molecular dynamics trajectory analyses were performed using the
 MD-POST automated analysis pipeline developed for systematic analysis
 of protein–ligand simulation trajectories.
+
+Trajectory Preprocessing: Raw trajectories were subjected to three-stage
+preprocessing using GROMACS (gmx trjconv): periodic boundary condition
+(PBC) removal (nojump), molecular centering, and backbone fitting (rot+trans)
+to eliminate overall translational and rotational motions.
 
 Structural stability of each system was evaluated using the root mean
 square deviation (RMSD) of backbone atoms relative to the starting
@@ -103,46 +118,53 @@ protein surfaces remain exposed to the solvent environment and can
 indicate conformational changes that alter solvent exposure.
 
 Hydrogen bonding patterns were analyzed using the GROMACS hydrogen
-bond analysis module to evaluate intermolecular interactions that
-contribute to structural stabilization of the system.
+bond analysis module (gmx hbond) to evaluate intra-protein interactions
+that contribute to structural stabilization of the system.
 
 Principal Component Analysis (PCA) was performed on the covariance
-matrix of atomic fluctuations to identify dominant collective motions
-within the protein structure. PCA reduces complex molecular motions
-into a smaller number of principal components that describe the
-largest amplitude conformational changes observed during the
-simulation.
+matrix of backbone atomic fluctuations using gmx covar and gmx anaeig.
+PCA reduces complex molecular motions into a smaller number of principal
+components that describe the largest amplitude conformational changes
+observed during the simulation.
 
-Free Energy Landscapes (FEL) were constructed using projections
-along the first two principal components. The FEL provides a
-thermodynamic representation of conformational states sampled
-during the simulation and enables identification of energetically
-favorable structural basins.
+Free Energy Landscapes (FEL) were constructed by direct Boltzmann
+inversion of the 2D joint probability density of the first two principal
+components at 300 K using the relation G = -kBT * ln(P). The resulting
+energy surfaces were visualized both as 2D contour maps and 3D surface plots
+to identify thermodynamically favorable structural basins.
 
 Secondary structure evolution throughout the simulation was analyzed
-using the DSSP algorithm, which assigns secondary structure elements
-such as alpha helices, beta sheets, and turns based on hydrogen
-bonding patterns and backbone geometry.
+using the DSSP algorithm (gmx dssp), which assigns secondary structure
+elements such as alpha helices, beta sheets, turns, and coils based on
+hydrogen bonding patterns and backbone geometry.
 
-All plots and structural analyses were generated automatically
-through the MD-POST pipeline to ensure reproducibility and
-consistent analysis across all simulated systems.
+Dynamic Cross-Correlation Matrix (DCCM) analysis was performed using
+a custom Python script with MDAnalysis to compute correlated residue
+motions. The DCCM captures collective conformational dynamics by
+quantifying the cross-correlation of displacement vectors between all
+pairs of C-alpha atoms, providing insight into allosteric communication
+networks and rigid/flexible domain behavior.
+
+Statistical comparison of structural metrics across systems was
+performed using the Kruskal-Wallis H-test, a non-parametric rank-based
+test that does not assume a normal distribution, with significance
+threshold set at p < 0.05.
+
+All plots were generated automatically through the MD-POST pipeline to
+ensure reproducibility and consistent analysis across all simulated systems.
 """
 
-
 ###############################################
-# TITLE
+# PAPER TITLE
 ###############################################
 
 title = "Comparative Molecular Dynamics Analysis of Protein Systems Using an Automated MD-POST Pipeline"
-
 
 ###############################################
 # TEXT PAPER VERSION
 ###############################################
 
-txt_paper = f"""
-{title}
+txt_paper = f"""{title}
 
 RESULTS AND DISCUSSION
 
@@ -153,13 +175,11 @@ METHODS
 {methods}
 """
 
-
 ###############################################
 # MARKDOWN PAPER VERSION
 ###############################################
 
-md_paper = f"""
-# {title}
+md_paper = f"""# {title}
 
 ## Results and Discussion
 
@@ -170,13 +190,11 @@ md_paper = f"""
 {methods}
 """
 
-
 ###############################################
 # LATEX PAPER VERSION
 ###############################################
 
-tex_paper = f"""
-\\section{{Results and Discussion}}
+tex_paper = f"""\\section{{Results and Discussion}}
 
 {results_section}
 
@@ -184,7 +202,6 @@ tex_paper = f"""
 
 {methods}
 """
-
 
 ###############################################
 # WRITE FILES
@@ -199,8 +216,7 @@ with open(os.path.join(PAPER_DIR, "paper_draft.md"), "w") as f:
 with open(os.path.join(PAPER_DIR, "paper_draft.tex"), "w") as f:
     f.write(tex_paper)
 
-
 print("Paper drafts generated:")
-print(" - outputs/paper/paper_draft.txt")
-print(" - outputs/paper/paper_draft.md")
-print(" - outputs/paper/paper_draft.tex")
+print("  - outputs/paper/paper_draft.txt")
+print("  - outputs/paper/paper_draft.md")
+print("  - outputs/paper/paper_draft.tex")

@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 set -eo pipefail
 
 SYS=$1
@@ -16,6 +15,7 @@ echo "Preprocessing $SYS"
 
 TPR=$(find "$SYSTEM_DIR" -name "*.tpr" | head -n 1)
 XTC=$(find "$SYSTEM_DIR" -name "*.xtc" | head -n 1)
+NDX=$(find "$SYSTEM_DIR" -name "*.ndx" | head -n 1)
 
 if [[ -z "$TPR" || -z "$XTC" ]]; then
     echo "ERROR: Missing trajectory files for $SYS"
@@ -26,29 +26,29 @@ fi
 
 echo "TPR: $TPR"
 echo "XTC: $XTC"
+if [[ -n "$NDX" ]]; then
+    echo "NDX: $NDX (using custom index)"
+fi
 
 echo "Removing PBC..."
-
-printf "0\n" | gmx trjconv \
--s "$TPR" \
--f "$XTC" \
--o "$OUTPUT_DIR/processed/nojump.xtc" \
--pbc nojump
+if [[ -n "$NDX" ]]; then
+    printf "0\n" | gmx trjconv -s "$TPR" -f "$XTC" -o "$OUTPUT_DIR/processed/nojump.xtc" -pbc nojump -n "$NDX"
+else
+    printf "0\n" | gmx trjconv -s "$TPR" -f "$XTC" -o "$OUTPUT_DIR/processed/nojump.xtc" -pbc nojump
+fi
 
 echo "Centering..."
-
-printf "1\n0\n" | gmx trjconv \
--s "$TPR" \
--f "$OUTPUT_DIR/processed/nojump.xtc" \
--o "$OUTPUT_DIR/processed/center.xtc" \
--center -pbc mol
+if [[ -n "$NDX" ]]; then
+    printf "1\n0\n" | gmx trjconv -s "$TPR" -f "$OUTPUT_DIR/processed/nojump.xtc" -o "$OUTPUT_DIR/processed/center.xtc" -center -pbc mol -n "$NDX"
+else
+    printf "1\n0\n" | gmx trjconv -s "$TPR" -f "$OUTPUT_DIR/processed/nojump.xtc" -o "$OUTPUT_DIR/processed/center.xtc" -center -pbc mol
+fi
 
 echo "Fitting..."
-
-printf "4\n0\n" | gmx trjconv \
--s "$TPR" \
--f "$OUTPUT_DIR/processed/center.xtc" \
--o "$OUTPUT_DIR/processed/processed.xtc" \
--fit rot+trans
+if [[ -n "$NDX" ]]; then
+    printf "4\n0\n" | gmx trjconv -s "$TPR" -f "$OUTPUT_DIR/processed/center.xtc" -o "$OUTPUT_DIR/processed/processed.xtc" -fit rot+trans -n "$NDX"
+else
+    printf "4\n0\n" | gmx trjconv -s "$TPR" -f "$OUTPUT_DIR/processed/center.xtc" -o "$OUTPUT_DIR/processed/processed.xtc" -fit rot+trans
+fi
 
 echo "Preprocessing completed for $SYS"
